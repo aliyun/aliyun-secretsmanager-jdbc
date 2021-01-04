@@ -1,0 +1,169 @@
+# Aliyun Secrets Manager JDBC Client for Java
+
+The Aliyun Secrets Manager JDBC Client for Java enables Java developers to easily connect to databases using dynamic RDS credentials stored in Aliyun Secrets Manager. You can get started in minutes using Maven .
+ 
+ 
+Read this in other languages: [English](README.md), [简体中文](README.zh-cn.md)
+ 
+- [Aliyun Secrets Manager Managed RDS Credentials Summary](https://help.aliyun.com/document_detail/194269.html?spm=a2c4g.11186623.3.3.5c3b2366dVeFp8)
+- [Aliyun Secrets Manager Client](https://help.aliyun.com/document_detail/190269.html?spm=a2c4g.11186623.6.621.201623668WpoMj)
+
+## License
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)
+
+## Features
+
+* Provide common JDBC drivers enabling simple database connectivity
+* Provides database connection pool support through c3p0, dbcp
+* Provides multiple access ways such as Access Key, STS, RAM Role, ECS RAM Role to obtain a dynamic RDS credentials
+* Provides the custom refresh time interval of the secret
+
+## Requirements
+
+- Your secret must be a dynamic RDS credentials, it is recommended that you use a dynamic RDS credentials with double RDS accounts
+- Java 1.8 or later
+- Maven
+
+## Client Mechanism
+
+Aliyun Secrets Manager JDBC client for Java periodically obtains the RDS account and password according to the dynamic RDS credentials. The client creates a database connection with the latest RDS user name and password every times.
+
+It is the extreme scenario that  failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
+
+  ```Java
+      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
+      Properties properties = new Properties();
+      properties.put("user", "#your-mysql-secret-name#");
+      Connection connect = null;
+      try {
+         connect = driver.connect("#url#", properties);
+      } catch(SQLException e) {
+          if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
+              try {
+                  // sleep to wait for refresh secret value
+                  Thread.sleep(1000);
+              } catch (InterruptedException ignore) {
+              }
+              connect = driver.connect("#url#", properties);
+          }
+      }
+  ```
+
+
+## Install
+
+The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in your project is to consume it from Maven. Import it as follows:
+
+```
+<dependency>
+      <groupId>com.aliyun</groupId>
+      <artifactId>aliyun-secretsmanager-jdbc</artifactId>
+      <version>1.0.0</version>
+</dependency>
+```
+
+## Build
+
+Once you check out the code from GitHub, you can build it using Maven. Use the following command to build:
+
+```
+mvn clean install -DskipTests -Dgpg.skip=true
+```
+
+## Support JDBC categories 
+
+Aliyun Secrets Manager JDBC client supports the following JDBC categories:
+
+- MySQL
+- MSSQL
+- MariaDB
+
+## 
+
+## Sample Code
+
+Aliyun Secrets Manager JDBC client for Java supports following three ways to connect database:
+
+* use JDBC to connect database
+* use database connection pool to connect database
+* use open source framework about database to connect database
+
+Take MySQL database, c3p0 database connection pool and database open source architecture JDBC template as examples:
+
+### Use JDBC to connect database
+
+#### Use configuration file(secretsmanager.properties) to access KMS([Configuration file setting for details](README_config.md))
+
+   ```
+## the type of access credentials
+credentials_type=ak   
+## the access key id
+credentials_access_key_id=#credentials_access_key_id#
+## the access key secret
+credentials_access_secret=#credentials_access_secret#
+## the region related to the kms service
+cache_client_region_id=[{"regionId":"#regionId#"}]
+## the custom refresh time interval of the secret, by default 6 hour, the minimum value is 5 minutes，the time unit is milliseconds
+refresh_secret_ttl=21600000
+   ```
+
+#### MySQL sample code using JDBC to connect database 
+
+  ```Java
+      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
+      Properties properties = new Properties();
+      properties.put("user", "#your-mysql-secret-name#");
+      Connection connect = driver.connect("#url#", properties);
+  ```
+
+### Use database connection pool c3p0 to connect database
+
+#### Use configuration file(secretsmanager.properties) to access KMS([Configuration file setting for details](README_config.md))
+
+   ```
+credentials_type=ak
+credentials_access_key_id=#credentials_access_key_id#
+credentials_access_secret=#credentials_access_secret#
+cache_client_region_id=[{"regionId":"#regionId#"}]
+   ```
+
+#### Set c3p0 configuration file(c3p0.properties)
+
+
+  ```
+c3p0.user=#your-mysql-secret-name#
+c3p0.driverClass=com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver
+c3p0.jdbcUrl=secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>
+  
+ ```
+
+
+### use open source framework about database to connect database
+
+
+#### Use configuration file(secretsmanager.properties) to access KMS([Configuration file setting for details](README_config.md))
+
+   ```
+credentials_type=ak
+credentials_access_key_id=#credentials_access_key_id#
+credentials_access_secret=#credentials_access_secret#
+cache_client_region_id=[{"regionId":"#regionId#"}]
+   ```
+   
+#### Set the following configuration items in spring config file
+
+  ```
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >
+        <property name="driverClass" value="com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver" />
+        <property name="user" value="#your-mysql-secret-name#" />
+        <property name="jdbcUrl" value="secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>" />
+        <property name="maxPoolSize" value="500" />
+        <property name="minPoolSize" value="5" />
+        <property name="initialPoolSize" value="20" />
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" >
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+  ```
