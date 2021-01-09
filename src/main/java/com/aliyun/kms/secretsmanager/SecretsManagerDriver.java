@@ -4,6 +4,7 @@ package com.aliyun.kms.secretsmanager;
 import com.aliyun.kms.secretsmanager.service.SecretsManagerDriverRefreshStrategy;
 import com.aliyun.kms.secretsmanager.utils.ConfigUtils;
 import com.aliyun.kms.secretsmanager.utils.Constants;
+import com.aliyun.kms.secretsmanager.utils.ExceptionUtils;
 import com.aliyun.kms.secretsmanager.utils.UrlUtils;
 import com.aliyuncs.auth.AlibabaCloudCredentialsProvider;
 import com.aliyuncs.auth.InstanceProfileCredentialsProvider;
@@ -67,15 +68,12 @@ public abstract class SecretsManagerDriver implements Driver {
             } else {
                 if (config != null && config.size() > 0) {
                     String credentialsType = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_TYPE_KEY);
-                    String accessKeyId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                    String accessSecret = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
                     String regionIds = config.getProperty(CacheClientConstant.ENV_CACHE_CLIENT_REGION_ID_KEY);
+                    long rotationTTL = Long.parseLong(TypeUtils.parseString(config.getOrDefault(Constants.REFRESH_SECRET_TTL_KEY, 0)));
                     checkConfigParamNull(credentialsType, CacheClientConstant.ENV_CREDENTIALS_TYPE_KEY);
-                    long rotationTTL = (long) config.getOrDefault(Constants.REFRESH_SECRET_TTL_KEY, 0);
-                    checkConfigParamNull(accessKeyId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                    checkConfigParamNull(accessSecret, CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
                     checkConfigParamNull(regionIds, CacheClientConstant.ENV_CACHE_CLIENT_REGION_ID_KEY);
                     DefaultSecretManagerClientBuilder clientBuilder = DefaultSecretManagerClientBuilder.standard();
+                    String regionId = "";
                     try {
                         List<Map<String, Object>> configList = new Gson().fromJson(regionIds, List.class);
                         for (Map<String, Object> map : configList) {
@@ -83,6 +81,9 @@ public abstract class SecretsManagerDriver implements Driver {
                             regionInfo.setEndpoint(TypeUtils.parseString(map.get(CacheClientConstant.ENV_REGION_ENDPOINT_NAME_KEY)));
                             regionInfo.setRegionId(TypeUtils.parseString(map.get(CacheClientConstant.ENV_REGION_REGION_ID_NAME_KEY)));
                             regionInfo.setVpc(TypeUtils.parseBoolean(map.get(CacheClientConstant.ENV_REGION_VPC_NAME_KEY)));
+                            if (StringUtils.isEmpty(regionId)) {
+                                regionId = regionInfo.getRegionId();
+                            }
                             clientBuilder.addRegion(regionInfo);
                         }
                     } catch (Exception e) {
@@ -91,6 +92,10 @@ public abstract class SecretsManagerDriver implements Driver {
                     AlibabaCloudCredentialsProvider provider;
                     switch (credentialsType) {
                         case "ak":
+                            String accessKeyId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
+                            String accessSecret = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
+                            checkConfigParamNull(accessKeyId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
+                            checkConfigParamNull(accessSecret, CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
                             provider = CredentialsProviderUtils.withAccessKey(accessKeyId, accessSecret);
                             break;
                         case "token":
@@ -102,12 +107,16 @@ public abstract class SecretsManagerDriver implements Driver {
                             break;
                         case "sts":
                         case "ram_role":
+                            accessKeyId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
+                            accessSecret = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
                             String roleSessionName = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_SESSION_NAME_KEY);
                             String roleArn = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_ARN_KEY);
                             String policy = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_POLICY_KEY);
+                            checkConfigParamNull(accessKeyId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
+                            checkConfigParamNull(accessSecret, CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
                             checkConfigParamNull(roleSessionName, CacheClientConstant.ENV_CREDENTIALS_ROLE_SESSION_NAME_KEY);
                             checkConfigParamNull(roleArn, CacheClientConstant.ENV_CREDENTIALS_ROLE_ARN_KEY);
-                            provider = new STSAssumeRoleSessionCredentialsProvider(accessKeyId, accessSecret, roleSessionName, roleArn, regionIds.split(",")[0], policy);
+                            provider = new STSAssumeRoleSessionCredentialsProvider(accessKeyId, accessSecret, roleSessionName, roleArn, regionId, policy);
                             break;
                         case "ecs_ram_role":
                             String roleName = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_NAME_KEY);
@@ -177,39 +186,27 @@ public abstract class SecretsManagerDriver implements Driver {
         String unwrappedUrl = "";
         if (url.startsWith(SCHEMA)) {
             unwrappedUrl = unwrapUrl(url);
+            return getWrappedDriver().connect(unwrappedUrl, info);
         } else {
             try {
-                SecretInfo secretInfo = secretCacheClient.getSecretInfo(url);
-                if (secretInfo != null) {
-                    String secretValue = secretInfo.getSecretValue();
-                    Properties urlInfo = new Gson().fromJson(secretValue, Properties.class);
-                    String endpoint = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_ENDPOINT);
-                    String port = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_PORT);
-                    String dbName = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_DB_NAME);
-                    if (!(StringUtils.isEmpty(endpoint) || StringUtils.isEmpty(port) || StringUtils.isEmpty(dbName))) {
-                        unwrappedUrl = contactUrl(endpoint, port, dbName);
-                    } else if (Constants.SECRET_TYPE_RDS_ROTATE.equalsIgnoreCase(secretInfo.getSecretType())) {
-                        String extendedConfig = secretInfo.getExtendedConfig();
-                        Properties extendedInfo = new Gson().fromJson(extendedConfig, Properties.class);
-                        if (extendedInfo.containsKey(Constants.PROPERTY_NAME_KEY_CUSTOM_DATA)) {
-                            Properties customData = new Gson().fromJson(extendedInfo.get(Constants.PROPERTY_NAME_KEY_CUSTOM_DATA).toString(), Properties.class);
-                            endpoint = customData.getProperty(Constants.PROPERTY_NAME_KEY_ENDPOINT);
-                            port = customData.getProperty(Constants.PROPERTY_NAME_KEY_PORT);
-                            dbName = customData.getProperty(Constants.PROPERTY_NAME_KEY_DB_NAME);
-                            if (!(StringUtils.isEmpty(endpoint) || StringUtils.isEmpty(port) || StringUtils.isEmpty(dbName))) {
-                                unwrappedUrl = contactUrl(endpoint, port, dbName);
-                            } else {
-                                throw new IllegalArgumentException("Invalid extended config");
-                            }
+                if (!StringUtils.isEmpty(url)) {
+                    SecretInfo secretInfo = secretCacheClient.getSecretInfo(url);
+                    if (secretInfo != null) {
+                        String secretValue = secretInfo.getSecretValue();
+                        Properties urlInfo = new Gson().fromJson(secretValue, Properties.class);
+                        String endpoint = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_ENDPOINT);
+                        String port = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_PORT);
+                        String dbName = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_DB_NAME);
+                        if (!(StringUtils.isEmpty(endpoint) || StringUtils.isEmpty(port) || StringUtils.isEmpty(dbName))) {
+                            unwrappedUrl = contactUrl(endpoint, port, dbName);
+                            return getWrappedDriver().connect(unwrappedUrl, info);
                         }
-                    } else {
-                        throw new IllegalArgumentException("Invalid url cache info");
                     }
-                } else {
-                    throw new IllegalArgumentException("Invalid url cache info");
                 }
             } catch (CacheSecretException e) {
-                throw new RuntimeException("Invalid url cache info", e);
+                if (!ExceptionUtils.isResourceNotFound(e)) {
+                    throw new RuntimeException("Invalid url cache info", e);
+                }
             }
         }
         String userKey = info.getProperty(Constants.PROPERTY_NAME_KEY_USER);
@@ -220,7 +217,7 @@ public abstract class SecretsManagerDriver implements Driver {
                 throw new RuntimeException(e);
             }
         }
-        return getWrappedDriver().connect(unwrappedUrl, info);
+        return null;
     }
 
     private String unwrapUrl(String url) {
@@ -231,19 +228,39 @@ public abstract class SecretsManagerDriver implements Driver {
     }
 
     private Connection connectWithSecret(String url, String userKey) throws SQLException {
-
         int retryTimes = 0;
         Properties info = new Properties();
         while (retryTimes++ <= LIMIT_RETRY_TIMES) {
             try {
-                String secretValue = secretCacheClient.getStringValue(userKey);
+                SecretInfo secretInfo = secretCacheClient.getSecretInfo(userKey);
+                if (StringUtils.isEmpty(url)) {
+                    if (Constants.SECRET_TYPE_RDS_ROTATE.equalsIgnoreCase(secretInfo.getSecretType())) {
+                        String extendedConfig = secretInfo.getExtendedConfig();
+                        Map<String, Object> extendedInfo = new Gson().fromJson(extendedConfig, Map.class);
+                        if (extendedInfo.containsKey(Constants.PROPERTY_NAME_KEY_CUSTOM_DATA)) {
+                            Properties customData = new Gson().fromJson(extendedInfo.get(Constants.PROPERTY_NAME_KEY_CUSTOM_DATA).toString(), Properties.class);
+                            String endpoint = customData.getProperty(Constants.PROPERTY_NAME_KEY_ENDPOINT);
+                            String port = customData.getProperty(Constants.PROPERTY_NAME_KEY_PORT);
+                            String dbName = customData.getProperty(Constants.PROPERTY_NAME_KEY_DB_NAME);
+                            if (!(StringUtils.isEmpty(endpoint) || StringUtils.isEmpty(port) || StringUtils.isEmpty(dbName))) {
+                                url = contactUrl(endpoint, port, dbName);
+                            } else {
+                                throw new IllegalArgumentException("Invalid extended config");
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Invalid extended config");
+                        }
+                    } else {
+                        throw new IllegalArgumentException(String.format("SecretsManager driver only supports secret type[%s]", Constants.SECRET_TYPE_RDS_ROTATE));
+                    }
+                }
+                String secretValue = secretInfo.getSecretValue();
                 Properties userInfo = new Gson().fromJson(secretValue, Properties.class);
                 info.put(Constants.DRIVER_PROPERTIES_KEY_USER, userInfo.getProperty(Constants.SECRET_INFO_KEY_ACCOUNT_NAME));
                 info.put(Constants.DRIVER_PROPERTIES_KEY_PASSWORD, userInfo.getProperty(Constants.SECRET_INFO_KEY_ACCOUNT_PASSWORD));
             } catch (CacheSecretException e) {
                 throw new RuntimeException("Get user info from cache fail", e);
             }
-
             try {
                 return getWrappedDriver().connect(url, info);
             } catch (SQLException e) {
@@ -271,9 +288,6 @@ public abstract class SecretsManagerDriver implements Driver {
 
     @Override
     public boolean acceptsURL(String url) throws SQLException {
-        if (StringUtils.isEmpty(url)) {
-            return false;
-        }
         String urlKey = UrlUtils.parseUrlUnique(url);
         if (!StringUtils.isEmpty(this.urlUnique)) {
             if (!urlKey.equals(this.urlUnique)) {

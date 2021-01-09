@@ -1,7 +1,7 @@
 package com.aliyun.kms.secretsmanager.utils;
 
 public interface Constants {
-    String PROJECT_VERSION = "1.0.0";
+    String PROJECT_VERSION = "1.0.1";
     String PROPERTY_NAME_KEY_CUSTOM_DATA = "CustomData";
     String PROPERTY_NAME_KEY_DB_NAME = "DBName";
     String PROPERTY_NAME_KEY_ENDPOINT = "Endpoint";
@@ -18,5 +18,5 @@ public interface Constants {
     String MARIA_DB_DRIVER_JAVA_OF_USER_AGENT = "alibabacloud-mariadbsqldriver-java";
     int MARIA_DB_DRIVER_JAVA_OF_USER_AGENT_PRIORITY = 5;
     String SECRET_TYPE_RDS_ROTATE = "RdsRotate";
-    String REFRESH_SECRET_TTL_KEY = "refreshSecretTTL";
+    String REFRESH_SECRET_TTL_KEY = "refresh_secret_ttl";
 }
