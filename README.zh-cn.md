@@ -77,6 +77,7 @@ mvn clean install -DskipTests -Dgpg.skip=true
 
 - MySQL
 - MSSQL
+- PostgreSQL
 - MariaDB
 
 ## 示例代码
