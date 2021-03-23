@@ -1,14 +1,14 @@
 package com.aliyun.kms.secretsmanager;
 
 import com.aliyun.kms.secretsmanager.service.SecretsManagerDriverRefreshStrategy;
-import com.aliyuncs.kms.secretsmanager.cacheclient.SecretCacheClient;
-import com.aliyuncs.kms.secretsmanager.cacheclient.SecretCacheClientBuilder;
-import com.aliyuncs.kms.secretsmanager.cacheclient.cache.FileCacheSecretStoreStrategy;
-import com.aliyuncs.kms.secretsmanager.cacheclient.exception.CacheSecretException;
-import com.aliyuncs.kms.secretsmanager.cacheclient.service.DefaultSecretManagerClientBuilder;
-import com.aliyuncs.kms.secretsmanager.cacheclient.service.FullJitterBackoffStrategy;
-import com.aliyuncs.kms.secretsmanager.cacheclient.utils.CacheClientConstant;
-import com.aliyuncs.kms.secretsmanager.cacheclient.utils.CredentialsProviderUtils;
+import com.aliyuncs.kms.secretsmanager.client.SecretCacheClient;
+import com.aliyuncs.kms.secretsmanager.client.SecretCacheClientBuilder;
+import com.aliyuncs.kms.secretsmanager.client.cache.FileCacheSecretStoreStrategy;
+import com.aliyuncs.kms.secretsmanager.client.exception.CacheSecretException;
+import com.aliyuncs.kms.secretsmanager.client.service.DefaultSecretManagerClientBuilder;
+import com.aliyuncs.kms.secretsmanager.client.service.FullJitterBackoffStrategy;
+import com.aliyuncs.kms.secretsmanager.client.utils.CacheClientConstant;
+import com.aliyuncs.kms.secretsmanager.client.utils.CredentialsProviderUtils;
 import org.junit.Test;
 
 import java.io.IOException;
