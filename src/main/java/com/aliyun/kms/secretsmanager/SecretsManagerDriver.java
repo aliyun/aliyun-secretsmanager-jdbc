@@ -198,7 +198,6 @@ public abstract class SecretsManagerDriver implements Driver {
                         String dbName = urlInfo.getProperty(Constants.PROPERTY_NAME_KEY_DB_NAME);
                         if (!(StringUtils.isEmpty(endpoint) || StringUtils.isEmpty(port) || StringUtils.isEmpty(dbName))) {
                             unwrappedUrl = contactUrl(endpoint, port, dbName);
-                            return getWrappedDriver().connect(unwrappedUrl, info);
                         }
                     }
                 }
