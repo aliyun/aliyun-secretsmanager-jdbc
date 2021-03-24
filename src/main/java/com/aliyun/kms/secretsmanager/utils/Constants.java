@@ -1,7 +1,7 @@
 package com.aliyun.kms.secretsmanager.utils;
 
 public interface Constants {
-    String PROJECT_VERSION = "1.0.3";
+    String PROJECT_VERSION = "1.0.4";
     String PROPERTY_NAME_KEY_CUSTOM_DATA = "CustomData";
     String PROPERTY_NAME_KEY_DB_NAME = "DBName";
     String PROPERTY_NAME_KEY_ENDPOINT = "Endpoint";
