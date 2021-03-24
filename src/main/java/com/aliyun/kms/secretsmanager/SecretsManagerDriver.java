@@ -186,7 +186,6 @@ public abstract class SecretsManagerDriver implements Driver {
         String unwrappedUrl = "";
         if (url.startsWith(SCHEMA)) {
             unwrappedUrl = unwrapUrl(url);
-            return getWrappedDriver().connect(unwrappedUrl, info);
         } else {
             try {
                 if (!StringUtils.isEmpty(url)) {
@@ -217,7 +216,7 @@ public abstract class SecretsManagerDriver implements Driver {
                 throw new RuntimeException(e);
             }
         }
-        return null;
+        return getWrappedDriver().connect(unwrappedUrl, info);
     }
 
     private String unwrapUrl(String url) {
