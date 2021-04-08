@@ -32,22 +32,20 @@ Aliyun Secrets Manager JDBC client for Java periodically obtains the RDS account
 It is the extreme scenario that  failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
 
   ```Java
-      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
-      Properties properties = new Properties();
-      properties.put("user", "#your-mysql-secret-name#");
-      Connection connect = null;
-      try {
-         connect = driver.connect("#url#", properties);
-      } catch(SQLException e) {
-          if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
-              try {
-                  // sleep to wait for refresh secret value
-                  Thread.sleep(1000);
-              } catch (InterruptedException ignore) {
-              }
-              connect = driver.connect("#url#", properties);
-          }
-      }
+       Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+       Connection connect = null;
+       try {
+        connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+       } catch(SQLException e) {
+            if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
+            try {
+                // sleep to wait for refresh secret value
+                Thread.sleep(1000);
+            } catch (InterruptedException ignore) {
+            }
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+            }
+        }
   ```
 
 
@@ -113,10 +111,13 @@ refresh_secret_ttl=21600000
 #### MySQL sample code using JDBC to connect database 
 
   ```Java
-      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
-      Properties properties = new Properties();
-      properties.put("user", "#your-mysql-secret-name#");
-      Connection connect = driver.connect("#url#", properties);
+      Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+      Connection connect = null;
+      try {
+        connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+      } catch(SQLException e) {
+        e.printStackTrace();
+      }
   ```
 
 ### Use database connection pool c3p0 to connect database
@@ -135,7 +136,7 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
 
   ```
 c3p0.user=#your-mysql-secret-name#
-c3p0.driverClass=com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver
+c3p0.driverClass=com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver
 c3p0.jdbcUrl=secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>
   
  ```
@@ -157,7 +158,7 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
 
   ```
     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >
-        <property name="driverClass" value="com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver" />
+        <property name="driverClass" value="com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver" />
         <property name="user" value="#your-mysql-secret-name#" />
         <property name="jdbcUrl" value="secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>" />
         <property name="maxPoolSize" value="500" />
