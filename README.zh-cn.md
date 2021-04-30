@@ -32,20 +32,37 @@
 在创建数据库链接极端场景下可能会出现创建链接失败需要用户重试创建链接，相关重试代码如下。
 
   ```Java
-       Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
-       Connection connect = null;
-       try {
-         connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-       } catch(SQLException e) {
-         if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
-            try {
-                // sleep to wait for refresh secret value
-                Thread.sleep(1000);
-            } catch (InterruptedException ignore) {
+import com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCRetrySample {
+
+    public static void main(String[] args) {
+        Connection connect = null;
+        try {
+            Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
+                try {
+                    // sleep to wait for refresh secret value
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignore) {
+                }
+                try {
+                    connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+                } catch (SQLException sqlEX) {
+                    sqlEX.printStackTrace();
+                }
             }
-            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-          }
         }
+    }
+}
   ```
 
 
@@ -57,7 +74,7 @@
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.5</version>
 </dependency>
 ```
 
@@ -108,13 +125,22 @@ refresh_secret_ttl=21600000
 #### 使用JDBC方式访问MySQL代码示例 
 
   ```Java
-      Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
-      Connection connect = null;
-      try {
-        connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-      } catch(SQLException e) {
-          e.printStackTrace();
-      }
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCSample {
+
+    public static void main(String[] args) throws Exception {
+        Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+        Connection connect = null;
+        try {
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
   ```
 
 ### 使用数据库连接池c3p0访问数据库

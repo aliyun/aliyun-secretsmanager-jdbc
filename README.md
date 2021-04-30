@@ -32,20 +32,37 @@ Aliyun Secrets Manager JDBC client for Java periodically obtains the RDS account
 It is the extreme scenario that  failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
 
   ```Java
-       Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
-       Connection connect = null;
-       try {
-        connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-       } catch(SQLException e) {
+import com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCRetrySample {
+
+    public static void main(String[] args) {
+        Connection connect = null;
+        try {
+            Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
             if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
-            try {
-                // sleep to wait for refresh secret value
-                Thread.sleep(1000);
-            } catch (InterruptedException ignore) {
-            }
-            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+                try {
+                    // sleep to wait for refresh secret value
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignore) {
+                }
+                try {
+                    connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+                } catch (SQLException sqlEX) {
+                    sqlEX.printStackTrace();
+                }
             }
         }
+    }
+}
   ```
 
 
@@ -57,7 +74,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.5</version>
 </dependency>
 ```
 
@@ -77,9 +94,6 @@ Aliyun Secrets Manager JDBC client supports the following JDBC categories:
 - MSSQL
 - PostgreSQL  
 - MariaDB
-
-
-## 
 
 ## Sample Code
 
@@ -111,13 +125,22 @@ refresh_secret_ttl=21600000
 #### MySQL sample code using JDBC to connect database 
 
   ```Java
-      Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
-      Connection connect = null;
-      try {
-        connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-      } catch(SQLException e) {
-        e.printStackTrace();
-      }
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCSample {
+
+    public static void main(String[] args) throws Exception {
+        Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+        Connection connect = null;
+        try {
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
   ```
 
 ### Use database connection pool c3p0 to connect database
