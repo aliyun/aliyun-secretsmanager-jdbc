@@ -7,7 +7,7 @@
   <groupId>com.aliyun</groupId>
   <artifactId>aliyun-secretsmanager-jdbc</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.3</version>
+  <version>1.0.6</version>
   <name>aliyun-secretsmanager-jdbc</name>
 
   <url>http://www.aliyun.com</url>
@@ -31,13 +31,13 @@ http://www.aliyun.com</description>
     <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>alibabacloud-secretsmanager-client</artifactId>
-      <version>1.1.2</version>
+      <version>1.1.6</version>
     </dependency>
     <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-java-sdk-core</artifactId>
       <optional>true</optional>
-      <version>[4.3.2,4.5.17)</version>
+      <version>[4.3.2,4.5.17]</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -184,7 +184,7 @@ http://www.aliyun.com</description>
         <extensions>true</extensions>
         <configuration>
           <serverId>sonatype-nexus-staging</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <nexusUrl>https://s01.oss.sonatype.org</nexusUrl>
           <autoReleaseAfterClose>true</autoReleaseAfterClose>
         </configuration>
       </plugin>

@@ -21,4 +21,5 @@ public interface Constants {
     int POSTGRESQL_DRIVER_JAVA_OF_USER_AGENT_PRIORITY = 10;
     String SECRET_TYPE_RDS_ROTATE = "RdsRotate";
     String REFRESH_SECRET_TTL_KEY = "refresh_secret_ttl";
+    String DEFAULT_CONFIG_NAME = "secretsmanager.properties";
 }

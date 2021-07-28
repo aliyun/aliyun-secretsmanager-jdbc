@@ -16,7 +16,7 @@
 
 * 提供通用的JDBC驱动，支持简单的数据库连接
 * 通过c3p0、dbcp提供数据库连接池支持
-* 支持Access Key、STS、RAM Role、ECS RAM Role多种访问方式获取动态RDS凭据
+* 支持Access Key、STS、RAM Role、ECS RAM Role、Client Key多种访问方式获取动态RDS凭据
 * 支持用户自定义的凭据刷新频率
 
 ## 使用要求
@@ -32,22 +32,37 @@
 在创建数据库链接极端场景下可能会出现创建链接失败需要用户重试创建链接，相关重试代码如下。
 
   ```Java
-      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
-      Properties properties = new Properties();
-      properties.put("user", "#your-mysql-secret-name#");
-      Connection connect = null;
-      try {
-         connect = driver.connect("#url#", properties);
-      } catch(SQLException e) {
-          if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
-              try {
-                  // sleep to wait for refresh secret value
-                  Thread.sleep(1000);
-              } catch (InterruptedException ignore) {
-              }
-              connect = driver.connect("#url#", properties);
-          }
-      }
+import com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCRetrySample {
+
+    public static void main(String[] args) {
+        Connection connect = null;
+        try {
+            Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            if (e.getErrorCode() == MysqlSecretsManagerSimpleDriver.LOGIN_FAILED_CODE) {
+                try {
+                    // sleep to wait for refresh secret value
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignore) {
+                }
+                try {
+                    connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+                } catch (SQLException sqlEX) {
+                    sqlEX.printStackTrace();
+                }
+            }
+        }
+    }
+}
   ```
 
 
@@ -59,7 +74,7 @@
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.6</version>
 </dependency>
 ```
 
@@ -103,17 +118,29 @@ credentials_access_key_id=#credentials_access_key_id#
 credentials_access_secret=#credentials_access_secret#
 ## 关联的KMS服务地域
 cache_client_region_id=[{"regionId":"#regionId#"}]
-## 用户自定义的刷新凭据, 默认为6小时，最小值为5分钟，单位为毫秒
+## 用户自定义的刷新频率, 默认为6小时，最小值为5分钟，单位为毫秒
 refresh_secret_ttl=21600000
    ```
 
 #### 使用JDBC方式访问MySQL代码示例 
 
   ```Java
-      SecretsManagerDriver driver = new MysqlSecretsManagerSimpleDriver();
-      Properties properties = new Properties();
-      properties.put("user", "#your-mysql-secret-name#");
-      Connection connect = driver.connect("#url#", properties);
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class SecretManagerJDBCSample {
+
+    public static void main(String[] args) throws Exception {
+        Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
+        Connection connect = null;
+        try {
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
   ```
 
 ### 使用数据库连接池c3p0访问数据库
@@ -132,7 +159,7 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
 
   ```
 c3p0.user=#your-mysql-secret-name#
-c3p0.driverClass=com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver
+c3p0.driverClass=com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver
 c3p0.jdbcUrl=secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>
   
   ```
@@ -154,7 +181,7 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
 
   ```
     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >
-        <property name="driverClass" value="com.aliyun.kms.secretsmanager.MysqlSecretsManagerDriver" />
+        <property name="driverClass" value="com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver" />
         <property name="user" value="#your-mysql-secret-name#" />
         <property name="jdbcUrl" value="secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>" />
         <property name="maxPoolSize" value="500" />

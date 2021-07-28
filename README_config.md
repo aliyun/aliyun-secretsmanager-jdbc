@@ -70,3 +70,18 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
 ## the custom refresh time interval of the secret, by default 6 hour, the minimum value is 5 minutes，the time unit is milliseconds
 refresh_secret_ttl=21600000
    ```
+
+5. Use Client Key to access AliCould KMS,you must set the following configuration variables
+
+  ```
+## the type of access credentials
+credentials_type=client_key
+## the password of the Client Key
+client_key_password=#your client key private key password#
+## the private key file path of the Client Key
+client_key_private_key_path=#your client key private key file path#
+## the region related to the kms service
+cache_client_region_id=[{"regionId":"#regionId#"}]
+## the custom refresh time interval of the secret, by default 6 hour, the minimum value is 5 minutes，the time unit is milliseconds
+refresh_secret_ttl=21600000
+   ```
