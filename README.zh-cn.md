@@ -16,7 +16,7 @@
 
 * 提供通用的JDBC驱动，支持简单的数据库连接
 * 通过c3p0、dbcp提供数据库连接池支持
-* 支持Access Key、STS、RAM Role、ECS RAM Role多种访问方式获取动态RDS凭据
+* 支持Access Key、STS、RAM Role、ECS RAM Role、Client Key多种访问方式获取动态RDS凭据
 * 支持用户自定义的凭据刷新频率
 
 ## 使用要求
@@ -74,7 +74,7 @@ public class SecretManagerJDBCRetrySample {
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.5</version>
+      <version>1.0.6</version>
 </dependency>
 ```
 

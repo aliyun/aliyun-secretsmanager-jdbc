@@ -2,21 +2,17 @@ package com.aliyun.kms.secretsmanager;
 
 
 import com.aliyun.kms.secretsmanager.service.SecretsManagerDriverRefreshStrategy;
-import com.aliyun.kms.secretsmanager.utils.ConfigUtils;
 import com.aliyun.kms.secretsmanager.utils.Constants;
 import com.aliyun.kms.secretsmanager.utils.ExceptionUtils;
 import com.aliyun.kms.secretsmanager.utils.UrlUtils;
-import com.aliyuncs.auth.AlibabaCloudCredentialsProvider;
-import com.aliyuncs.auth.InstanceProfileCredentialsProvider;
-import com.aliyuncs.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.aliyuncs.kms.secretsmanager.client.SecretCacheClient;
 import com.aliyuncs.kms.secretsmanager.client.SecretCacheClientBuilder;
 import com.aliyuncs.kms.secretsmanager.client.exception.CacheSecretException;
+import com.aliyuncs.kms.secretsmanager.client.model.CredentialsProperties;
 import com.aliyuncs.kms.secretsmanager.client.model.RegionInfo;
 import com.aliyuncs.kms.secretsmanager.client.model.SecretInfo;
 import com.aliyuncs.kms.secretsmanager.client.service.DefaultSecretManagerClientBuilder;
-import com.aliyuncs.kms.secretsmanager.client.utils.CacheClientConstant;
-import com.aliyuncs.kms.secretsmanager.client.utils.CredentialsProviderUtils;
+import com.aliyuncs.kms.secretsmanager.client.utils.CredentialsPropertiesUtils;
 import com.aliyuncs.kms.secretsmanager.client.utils.TypeUtils;
 import com.aliyuncs.utils.StringUtils;
 import com.google.gson.Gson;
@@ -34,14 +30,14 @@ public abstract class SecretsManagerDriver implements Driver {
     private static final String SCHEMA = "secrets-manager";
     private static final int LIMIT_RETRY_TIMES = 3;
 
-    private static Properties config;
+    private static CredentialsProperties credentialsProperties;
 
     protected SecretCacheClient secretCacheClient;
 
     private String urlUnique;
 
     static {
-        config = ConfigUtils.loadDriverConfig();
+        credentialsProperties = CredentialsPropertiesUtils.loadCredentialsProperties(Constants.DEFAULT_CONFIG_NAME);
     }
 
     public String getUrlUnique() {
@@ -66,67 +62,13 @@ public abstract class SecretsManagerDriver implements Driver {
             if (secretCacheClient != null) {
                 this.secretCacheClient = secretCacheClient;
             } else {
-                if (config != null && config.size() > 0) {
-                    String credentialsType = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_TYPE_KEY);
-                    String regionIds = config.getProperty(CacheClientConstant.ENV_CACHE_CLIENT_REGION_ID_KEY);
-                    long rotationTTL = Long.parseLong(TypeUtils.parseString(config.getOrDefault(Constants.REFRESH_SECRET_TTL_KEY, 0)));
-                    checkConfigParamNull(credentialsType, CacheClientConstant.ENV_CREDENTIALS_TYPE_KEY);
-                    checkConfigParamNull(regionIds, CacheClientConstant.ENV_CACHE_CLIENT_REGION_ID_KEY);
+                if (credentialsProperties != null) {
+                    long rotationTTL = Long.parseLong(TypeUtils.parseString(credentialsProperties.getSourceProperties().getOrDefault(Constants.REFRESH_SECRET_TTL_KEY, 0)));
                     DefaultSecretManagerClientBuilder clientBuilder = DefaultSecretManagerClientBuilder.standard();
-                    String regionId = "";
-                    try {
-                        List<Map<String, Object>> configList = new Gson().fromJson(regionIds, List.class);
-                        for (Map<String, Object> map : configList) {
-                            RegionInfo regionInfo = new RegionInfo();
-                            regionInfo.setEndpoint(TypeUtils.parseString(map.get(CacheClientConstant.ENV_REGION_ENDPOINT_NAME_KEY)));
-                            regionInfo.setRegionId(TypeUtils.parseString(map.get(CacheClientConstant.ENV_REGION_REGION_ID_NAME_KEY)));
-                            regionInfo.setVpc(TypeUtils.parseBoolean(map.get(CacheClientConstant.ENV_REGION_VPC_NAME_KEY)));
-                            if (StringUtils.isEmpty(regionId)) {
-                                regionId = regionInfo.getRegionId();
-                            }
-                            clientBuilder.addRegion(regionInfo);
-                        }
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException(String.format("Driver config param[%s] is illegal", CacheClientConstant.ENV_CACHE_CLIENT_REGION_ID_KEY));
+                    for (RegionInfo regionInfo : credentialsProperties.getRegionInfoList()) {
+                        clientBuilder.addRegion(regionInfo);
                     }
-                    AlibabaCloudCredentialsProvider provider;
-                    switch (credentialsType) {
-                        case "ak":
-                            String accessKeyId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                            String accessSecret = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
-                            checkConfigParamNull(accessKeyId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                            checkConfigParamNull(accessSecret, CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
-                            provider = CredentialsProviderUtils.withAccessKey(accessKeyId, accessSecret);
-                            break;
-                        case "token":
-                            String credentialsAccessTokenId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_TOKEN_ID_KEY);
-                            String credentialsAccessToken = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_TOKEN_KEY);
-                            checkConfigParamNull(credentialsAccessTokenId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_TOKEN_ID_KEY);
-                            checkConfigParamNull(credentialsAccessToken, CacheClientConstant.ENV_CREDENTIALS_ACCESS_TOKEN_KEY);
-                            provider = CredentialsProviderUtils.withToken(credentialsAccessTokenId, credentialsAccessToken);
-                            break;
-                        case "sts":
-                        case "ram_role":
-                            accessKeyId = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                            accessSecret = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
-                            String roleSessionName = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_SESSION_NAME_KEY);
-                            String roleArn = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_ARN_KEY);
-                            String policy = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_POLICY_KEY);
-                            checkConfigParamNull(accessKeyId, CacheClientConstant.ENV_CREDENTIALS_ACCESS_KEY_ID_KEY);
-                            checkConfigParamNull(accessSecret, CacheClientConstant.ENV_CREDENTIALS_ACCESS_SECRET_KEY);
-                            checkConfigParamNull(roleSessionName, CacheClientConstant.ENV_CREDENTIALS_ROLE_SESSION_NAME_KEY);
-                            checkConfigParamNull(roleArn, CacheClientConstant.ENV_CREDENTIALS_ROLE_ARN_KEY);
-                            provider = new STSAssumeRoleSessionCredentialsProvider(accessKeyId, accessSecret, roleSessionName, roleArn, regionId, policy);
-                            break;
-                        case "ecs_ram_role":
-                            String roleName = config.getProperty(CacheClientConstant.ENV_CREDENTIALS_ROLE_NAME_KEY);
-                            checkConfigParamNull(roleName, CacheClientConstant.ENV_CREDENTIALS_ROLE_NAME_KEY);
-                            provider = new InstanceProfileCredentialsProvider(roleName);
-                            break;
-                        default:
-                            throw new IllegalArgumentException(String.format("Driver config param[%s] is illegal", CacheClientConstant.ENV_CREDENTIALS_TYPE_KEY));
-                    }
-                    clientBuilder.withCredentialsProvider(provider);
+                    clientBuilder.withCredentialsProvider(credentialsProperties.getProvider());
                     try {
                         this.secretCacheClient = SecretCacheClientBuilder.newCacheClientBuilder(clientBuilder.build()).withRefreshSecretStrategy(new SecretsManagerDriverRefreshStrategy(rotationTTL)).build();
                     } catch (CacheSecretException e) {

@@ -16,7 +16,7 @@ Read this in other languages: [English](README.md), [简体中文](README.zh-cn.
 
 * Provide common JDBC drivers enabling simple database connectivity
 * Provides database connection pool support through c3p0, dbcp
-* Provides multiple access ways such as Access Key, STS, RAM Role, ECS RAM Role to obtain a dynamic RDS credentials
+* Provides multiple access ways such as Access Key, STS, RAM Role, ECS RAM Role,Client Key to obtain a dynamic RDS credentials
 * Provides the custom refresh time interval of the secret
 
 ## Requirements
@@ -74,7 +74,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.5</version>
+      <version>1.0.6</version>
 </dependency>
 ```
 
