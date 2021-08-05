@@ -5,8 +5,8 @@ The Aliyun Secrets Manager JDBC Client for Java enables Java developers to easil
  
 Read this in other languages: [English](README.md), [简体中文](README.zh-cn.md)
  
-- [Aliyun Secrets Manager Managed RDS Credentials Summary](https://help.aliyun.com/document_detail/194269.html?spm=a2c4g.11186623.3.3.5c3b2366dVeFp8)
-- [Aliyun Secrets Manager Client](https://help.aliyun.com/document_detail/190269.html?spm=a2c4g.11186623.6.621.201623668WpoMj)
+- [Aliyun Secrets Manager Managed RDS Credentials Summary](https://help.aliyun.com/document_detail/194269.html)
+- [Aliyun Secrets Manager Client](https://help.aliyun.com/document_detail/190269.html)
 
 ## License
 
@@ -74,7 +74,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.6</version>
+      <version>1.0.7</version>
 </dependency>
 ```
 
@@ -111,15 +111,14 @@ Take MySQL database, c3p0 database connection pool and database open source arch
 
    ```
 ## the type of access credentials
-credentials_type=ak   
-## the access key id
-credentials_access_key_id=#credentials_access_key_id#
-## the access key secret
-credentials_access_secret=#credentials_access_secret#
+credentials_type=client_key
+## you could read the password of client key from environment variable or file
+client_key_password_from_env_variable=#your client key private key password environment variable name#
+client_key_password_from_file_path=#your client key private key password file path#
+## the private key file path of the Client Key
+client_key_private_key_path=#your client key private key file path#
 ## the region related to the kms service
 cache_client_region_id=[{"regionId":"#regionId#"}]
-## the custom refresh time interval of the secret, by default 6 hour, the minimum value is 5 minutes，the time unit is milliseconds
-refresh_secret_ttl=21600000
    ```
 
 #### MySQL sample code using JDBC to connect database 

@@ -5,8 +5,8 @@
  
 其他语言版本: [English](README.md), [简体中文](README.zh-cn.md)
  
-- [阿里云凭据管家动态RDS凭据介绍](https://help.aliyun.com/document_detail/194269.html?spm=a2c4g.11186623.3.3.5c3b2366dVeFp8)
-- [阿里云凭据管家客户端](https://help.aliyun.com/document_detail/190269.html?spm=a2c4g.11186623.6.621.201623668WpoMj)
+- [阿里云凭据管家动态RDS凭据介绍](https://help.aliyun.com/document_detail/194269.html)
+- [阿里云凭据管家客户端](https://help.aliyun.com/document_detail/190269.html)
 
 ## 许可证
 
@@ -74,7 +74,7 @@ public class SecretManagerJDBCRetrySample {
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.0.6</version>
+      <version>1.0.7</version>
 </dependency>
 ```
 
@@ -111,15 +111,12 @@ mvn clean install -DskipTests -Dgpg.skip=true
 
    ```
 ## 访问凭据类型
-credentials_type=ak
-## Access Key Id
-credentials_access_key_id=#credentials_access_key_id#
-## Access Key Secret
-credentials_access_secret=#credentials_access_secret#
+credentials_type=client_key
+## 读取client key的解密密码：支持从环境变量或者文件读取
+client_key_password_from_env_variable=#your client key private key password environment variable name#
+client_key_password_from_file_path=#your client key private key password file path#
 ## 关联的KMS服务地域
 cache_client_region_id=[{"regionId":"#regionId#"}]
-## 用户自定义的刷新频率, 默认为6小时，最小值为5分钟，单位为毫秒
-refresh_secret_ttl=21600000
    ```
 
 #### 使用JDBC方式访问MySQL代码示例 
