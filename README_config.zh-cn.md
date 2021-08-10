@@ -77,12 +77,12 @@ refresh_secret_ttl=21600000
   ```
 ## 访问凭据类型
 credentials_type=client_key
-## Client Key密码
-client_key_password=#your client key private key password#
-# Client Key私钥文件路径
-client_key_private_key_path=#your client key private key file path#
+## 读取client key的解密密码：支持从环境变量或者文件读取
+client_key_password_from_env_variable=#your client key private key password environment variable name#
+client_key_password_from_file_path=#your client key private key password file path#
 ## 关联的KMS服务地域
 cache_client_region_id=[{"regionId":"#regionId#"}]
 ## 用户自定义的刷新频率, 默认为6小时，最小值为5分钟，单位为毫秒
-refresh_secret_ttl=21600000
+## 下面的配置将凭据刷新频率设定为1小时
+refresh_secret_ttl=3600000
    ```
