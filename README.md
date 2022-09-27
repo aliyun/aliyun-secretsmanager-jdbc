@@ -1,6 +1,6 @@
 # Aliyun Secrets Manager JDBC Client for Java
 
-The Aliyun Secrets Manager JDBC Client for Java enables Java developers to easily connect to databases using dynamic RDS credentials stored in Aliyun Secrets Manager. You can get started in minutes using Maven .
+The Aliyun Secrets Manager JDBC Client for Java enables Java developers to easily connect to databases using dynamic RDS or generic credentials stored in Aliyun Secrets Manager. You can get started in minutes using Maven .
  
  
 Read this in other languages: [English](README.md), [简体中文](README.zh-cn.md)
@@ -16,20 +16,28 @@ Read this in other languages: [English](README.md), [简体中文](README.zh-cn.
 
 * Provide common JDBC drivers enabling simple database connectivity
 * Provides database connection pool support through c3p0, dbcp
-* Provides multiple access ways such as Access Key, STS, RAM Role, ECS RAM Role,Client Key to obtain a dynamic RDS credentials
+* Provides multiple access ways such as Access Key, STS, RAM Role, ECS RAM Role,Client Key to obtain a dynamic RDS or generic credentials
 * Provides the custom refresh time interval of the secret
 
 ## Requirements
 
-- Your secret must be a dynamic RDS credentials, it is recommended that you use a dynamic RDS credentials with double RDS accounts
+- Your secret must be a dynamic RDS or generic credentials, it is recommended that you use a dynamic RDS or generic credentials with double database accounts
 - Java 1.8 or later
 - Maven
+- If your secret type is Generic, your secret value data format must be json and your secret value data format should meet the following requirements
+  ``` 
+{
+    "AccountName":"<your database account user>",
+    "AccountPassword":"<your database account password>"
+}
+  ```
+
 
 ## Client Mechanism
 
-Aliyun Secrets Manager JDBC client for Java periodically obtains the RDS account and password according to the dynamic RDS credentials. The client creates a database connection with the latest RDS user name and password every times.
+Aliyun Secrets Manager JDBC client for Java periodically obtains the database account and password according to the dynamic RDS or generic credentials. The client creates a database connection with the latest database user name and password every times.
 
-It is the extreme scenario that  failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
+It is the extreme scenario that failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
 
   ```Java
 import com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver;
@@ -74,7 +82,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.1.1</version>
+      <version>1.2.0</version>
 </dependency>
 ```
 

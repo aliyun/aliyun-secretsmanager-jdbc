@@ -1,6 +1,6 @@
 # 
 
-阿里云凭据管家JDBC Java客户端可以使Java开发者快速使用阿里云动态RDS凭据安全获取数据库连接。你可以通过Maven快速使用。
+阿里云凭据管家JDBC Java客户端可以使Java开发者快速使用阿里云动态RDS或普通凭据安全获取数据库连接。你可以通过Maven快速使用。
  
  
 其他语言版本: [English](README.md), [简体中文](README.zh-cn.md)
@@ -16,18 +16,25 @@
 
 * 提供通用的JDBC驱动，支持简单的数据库连接
 * 通过c3p0、dbcp提供数据库连接池支持
-* 支持Access Key、STS、RAM Role、ECS RAM Role、Client Key多种访问方式获取动态RDS凭据
+* 支持Access Key、STS、RAM Role、ECS RAM Role、Client Key多种访问方式获取动态RDS或普通凭据
 * 支持用户自定义的凭据刷新频率
 
 ## 使用要求
 
-- 您的凭据必须是动态RDS凭据，建议使用双账号托管的动态RDS凭据
+- 您的凭据必须是动态RDS或普通凭据，建议使用双账号托管的动态RDS或普通凭据
 - Java 1.8 或以上版本
 - Maven
+- 如果您的凭据是普通凭据，您的普通凭据格式是JSON而且要满足以下格式要求：
+  ``` 
+{
+    "AccountName":"<您的数据库账号用户名>",
+    "AccountPassword":"<您的数据库账号密码>"
+}
+  ```
 
 ## 客户端机制
 
-阿里云凭据管家JDBC Java客户端会依据动态RDS凭据设定的轮转周期定时获取RDS用户名和密码，客户端每次创建数据库链接都会使用最新获取到RDS用户名和密码。
+阿里云凭据管家JDBC Java客户端会依据动态RDS凭据设定的轮转周期定时获取数据库用户名和密码，客户端每次创建数据库链接都会使用最新获取到数据库用户名和密码。
 
 在创建数据库链接极端场景下可能会出现创建链接失败需要用户重试创建链接，相关重试代码如下。
 
@@ -74,7 +81,7 @@ public class SecretManagerJDBCRetrySample {
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.1.1</version>
+      <version>1.2.0</version>
 </dependency>
 ```
 
