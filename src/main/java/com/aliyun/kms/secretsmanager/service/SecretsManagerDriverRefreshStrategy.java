@@ -1,6 +1,5 @@
 package com.aliyun.kms.secretsmanager.service;
 
-import com.aliyun.kms.secretsmanager.utils.Constants;
 import com.aliyun.kms.secretsmanager.utils.DateUtils;
 import com.aliyuncs.kms.secretsmanager.client.exception.CacheSecretException;
 import com.aliyuncs.kms.secretsmanager.client.model.CacheSecretInfo;
@@ -63,9 +62,6 @@ public class SecretsManagerDriverRefreshStrategy implements RefreshSecretStrateg
 
     @Override
     public long parseTTL(SecretInfo secretInfo) {
-        if (StringUtils.isEmpty(secretInfo.getSecretType()) || !Constants.SECRET_TYPE_RDS_ROTATE.equalsIgnoreCase(secretInfo.getSecretType())) {
-            throw new IllegalArgumentException(String.format("SecretsManager driver refresh strategy only supports secret type[%s]", Constants.SECRET_TYPE_RDS_ROTATE));
-        }
         String rotationInterval = secretInfo.getRotationInterval();
         if (StringUtils.isEmpty(rotationInterval)) {
             return rotationTTL;
