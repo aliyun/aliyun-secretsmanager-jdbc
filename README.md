@@ -25,12 +25,13 @@ Read this in other languages: [English](README.md), [简体中文](README.zh-cn.
 - Java 1.8 or later
 - Maven
 - If your secret type is Generic, your secret value data format must be json and your secret value data format should meet the following requirements
-  ``` 
+
+```
 {
     "AccountName":"<your database account user>",
     "AccountPassword":"<your database account password>"
 }
-  ```
+```
 
 
 ## Client Mechanism
