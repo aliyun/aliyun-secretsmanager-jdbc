@@ -1,4 +1,8 @@
-# 
+![](https://aliyunsdk-pages.alicdn.com/icons/AlibabaCloud.svg)
+
+# 阿里云凭据管家JDBC Java客户端 
+
+[![GitHub version](https://badge.fury.io/gh/aliyun%2Faliyun-secretsmanager-jdbc.svg)](https://badge.fury.io/gh/aliyun%2Faliyun-secretsmanager-jdbc)
 
 阿里云凭据管家JDBC Java客户端可以使Java开发者快速使用阿里云动态RDS或普通凭据安全获取数据库连接。你可以通过Maven快速使用。
  
@@ -83,7 +87,7 @@ public class SecretManagerJDBCRetrySample {
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.3.1</version>
+      <version>1.3.2</version>
 </dependency>
 ```
 

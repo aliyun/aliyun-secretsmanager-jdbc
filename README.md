@@ -1,4 +1,7 @@
+![](https://aliyunsdk-pages.alicdn.com/icons/AlibabaCloud.svg)
 # Aliyun Secrets Manager JDBC Client for Java
+
+[![GitHub version](https://badge.fury.io/gh/aliyun%2Faliyun-secretsmanager-jdbc.svg)](https://badge.fury.io/gh/aliyun%2Faliyun-secretsmanager-jdbc)
 
 The Aliyun Secrets Manager JDBC Client for Java enables Java developers to easily connect to databases using dynamic RDS or generic credentials stored in Aliyun Secrets Manager. You can get started in minutes using Maven .
  
@@ -83,7 +86,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.3.1</version>
+      <version>1.3.2</version>
 </dependency>
 ```
 
