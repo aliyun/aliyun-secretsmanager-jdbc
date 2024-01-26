@@ -86,7 +86,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.3.3</version>
+      <version>1.3.4</version>
 </dependency>
 ```
 

@@ -7,7 +7,7 @@
   <groupId>com.aliyun</groupId>
   <artifactId>aliyun-secretsmanager-jdbc</artifactId>
   <packaging>jar</packaging>
-  <version>1.3.3</version>
+  <version>1.3.4</version>
   <name>aliyun-secretsmanager-jdbc</name>
 
   <url>http://www.aliyun.com</url>
@@ -31,7 +31,7 @@ http://www.aliyun.com</description>
     <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>alibabacloud-secretsmanager-client</artifactId>
-      <version>1.3.6</version>
+      <version>1.3.7</version>
     </dependency>
     <dependency>
       <groupId>com.aliyun</groupId>
