@@ -87,7 +87,7 @@ public class SecretManagerJDBCRetrySample {
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.3.5</version>
+      <version>1.3.6</version>
 </dependency>
 ```
 
@@ -145,8 +145,8 @@ public class SecretManagerJDBCSample {
         Class.forName("com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver");
         Connection connect = null;
         try {
-            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#","");
-        } catch(SQLException e) {
+            connect = DriverManager.getConnection("secrets-manager:mysql://<your-mysql-ip>:<your-mysql-port>/<your-database-name>", "#your-mysql-secret-name#", "");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -203,3 +203,11 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
         <property name="dataSource" ref="dataSource" />
     </bean>
   ```
+
+## 常见问题(FAQ)
+
+**Q: 当发生com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.异常时应该怎么办？**
+
+A: 此原因是mysql连接串中加了autoReconnect=true,导致mysql底层将jdbc原始的SqlException重新包装了一层，且修改了原始的错误码，导致当前sdk根据密码失效错误码判断的重试机制失效。
+
+**解决方案:** 将SDK升级到1.3.6及以上版本，新版本更有效地处理连接重试逻辑，并解决了连接串中autoReconnect=true影响错误码检测的问题。

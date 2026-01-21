@@ -41,7 +41,7 @@ Read this in other languages: [English](README.md), [简体中文](README.zh-cn.
 
 Aliyun Secrets Manager JDBC client for Java periodically obtains the database account and password according to the dynamic RDS or generic credentials. The client creates a database connection with the latest database user name and password every times.
 
-It is the extreme scenario that failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows。
+It is the extreme scenario that failure may occur to create database connection.You need to try to create the database connection again. The sample codes are as follows.
 
   ```Java
 import com.aliyun.kms.secretsmanager.MysqlSecretsManagerSimpleDriver;
@@ -86,7 +86,7 @@ The recommended way to use the Aliyun Secrets Manager JDBC Client for Java in yo
 <dependency>
       <groupId>com.aliyun</groupId>
       <artifactId>aliyun-secretsmanager-jdbc</artifactId>
-      <version>1.3.5</version>
+      <version>1.3.6</version>
 </dependency>
 ```
 
@@ -204,3 +204,11 @@ cache_client_region_id=[{"regionId":"#regionId#"}]
         <property name="dataSource" ref="dataSource" />
     </bean>
   ```
+
+## FAQ
+
+**Q: What should I do when encountering the exception com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.?**
+
+A: This is caused by adding autoReconnect=true in the MySQL connection string, which causes the MySQL underlying layer to wrap the original SQLException from JDBC with an additional layer and modify the original error code, causing the current SDK's retry mechanism based on password expiration error codes to fail.
+
+**Solution:** Upgrade the SDK to version 1.3.6 or higher, which handles the connection retry logic more effectively and addresses issues with autoReconnect=true in the connection string affecting error code detection.

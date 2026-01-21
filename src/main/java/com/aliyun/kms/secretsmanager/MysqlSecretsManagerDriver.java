@@ -55,7 +55,20 @@ public class MysqlSecretsManagerDriver extends SecretsManagerDriver {
         if (e instanceof SQLException) {
             SQLException sqle = (SQLException) e;
             int errorCode = sqle.getErrorCode();
-            return errorCode == LOGIN_FAILED_CODE;
+            if (errorCode == LOGIN_FAILED_CODE) {
+                return true;
+            }
+        }
+        return isCJAuthError(e);
+    }
+
+    private boolean isCJAuthError(Exception e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            SQLException sqlEx = (SQLException) cause;
+            return sqlEx.getErrorCode() == LOGIN_FAILED_CODE;
+        } else if (cause != null && "com.mysql.cj.exceptions.CJException".equals(cause.getClass().getName())) {
+            return ((com.mysql.cj.exceptions.CJException) cause).getVendorCode() == LOGIN_FAILED_CODE;
         }
         return false;
     }

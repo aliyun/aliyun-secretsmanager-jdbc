@@ -12,6 +12,8 @@ import com.aliyuncs.kms.secretsmanager.client.model.CredentialsProperties;
 import com.aliyuncs.kms.secretsmanager.client.model.RegionInfo;
 import com.aliyuncs.kms.secretsmanager.client.model.SecretInfo;
 import com.aliyuncs.kms.secretsmanager.client.service.DefaultSecretManagerClientBuilder;
+import com.aliyuncs.kms.secretsmanager.client.utils.CacheClientConstant;
+import com.aliyuncs.kms.secretsmanager.client.utils.CommonLogger;
 import com.aliyuncs.kms.secretsmanager.client.utils.CredentialsPropertiesUtils;
 import com.aliyuncs.kms.secretsmanager.client.utils.TypeUtils;
 import com.aliyuncs.utils.StringUtils;
@@ -20,7 +22,6 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.sql.*;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -30,7 +31,7 @@ public abstract class SecretsManagerDriver implements Driver {
     private static final String SCHEMA = "secrets-manager";
     private static final int LIMIT_RETRY_TIMES = 3;
 
-    private static CredentialsProperties credentialsProperties;
+    private static final CredentialsProperties credentialsProperties;
 
     protected SecretCacheClient secretCacheClient;
 
@@ -150,12 +151,8 @@ public abstract class SecretsManagerDriver implements Driver {
             }
         }
         String userKey = info.getProperty(Constants.PROPERTY_NAME_KEY_USER);
-        if (info != null && userKey != null) {
-            try {
-                return connectWithSecret(unwrappedUrl, userKey);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+        if (userKey != null) {
+            return connectWithSecret(unwrappedUrl, userKey);
         }
         return getWrappedDriver().connect(unwrappedUrl, info);
     }
@@ -164,12 +161,13 @@ public abstract class SecretsManagerDriver implements Driver {
         if (StringUtils.isEmpty(url) || !url.startsWith(SCHEMA)) {
             throw new IllegalArgumentException("JDBC URL is invalid");
         }
-        return url == null ? null : url.replaceFirst(SCHEMA, "jdbc");
+        return url.replaceFirst(SCHEMA, "jdbc");
     }
 
     private Connection connectWithSecret(String url, String userKey) throws SQLException {
         int retryTimes = 0;
         Properties info = new Properties();
+        SQLException lastSQLException = null;
         while (retryTimes++ <= LIMIT_RETRY_TIMES) {
             try {
                 SecretInfo secretInfo = secretCacheClient.getSecretInfo(userKey);
@@ -204,26 +202,22 @@ public abstract class SecretsManagerDriver implements Driver {
             try {
                 return getWrappedDriver().connect(url, info);
             } catch (SQLException e) {
+                lastSQLException = e;
                 if (isAuthError(e)) {
                     try {
                         if (!secretCacheClient.refreshNow(userKey)) {
                             throw e;
                         }
+                        CommonLogger.getCommonLogger(CacheClientConstant.MODE_NAME).infof("refresh user:{} success retryTimes:{}", userKey, retryTimes);
                     } catch (InterruptedException ie) {
-                        throw new RuntimeException("Refresh cache fail", ie);
+                        Thread.currentThread().interrupt();
                     }
                 } else {
                     throw e;
                 }
             }
         }
-        throw new SQLException("Connect times limit exceeded");
-    }
-
-    private void checkConfigParamNull(String param, String paramName) {
-        if (StringUtils.isEmpty(param)) {
-            throw new IllegalArgumentException(String.format("Driver config missing required parameters[%s]", paramName));
-        }
+        throw new SQLException("Connect times limit exceeded", lastSQLException);
     }
 
     @Override
